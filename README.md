@@ -2,7 +2,7 @@
 
 ## Problem Statement
 
-As an engineering manager or senior IC, critical tasks arrive from multiple channels simultaneously — Jira tickets, Slack messages, Gmail threads, Trello cards — each with its own urgency signals, due dates, and stakeholders. Context-switching between four tools to manually assess what to work on next is costly: important items get missed, urgency is misjudged, and prioritization becomes reactive rather than deliberate.
+In your day to day job in office where you deal with multiple stakeholders over different platforms, critical or trivial tasks arrive from multiple channels simultaneously — Jira tickets, Slack messages, Gmail threads, Trello cards — each with its own urgency signals, due dates, and stakeholders. Context-switching between four tools to manually assess what to work on next is costly: important items get missed, urgency is misjudged, and prioritization becomes reactive rather than deliberate.
 
 There is no single view that consolidates all of this and tells you **what to do right now, and why**.
 

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLR TEC 07 - Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f8;
+            color: #202124;
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: #1a73e8;
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e8eaed;
+        }
+
+        /* ── API Key Setup Banner ─────────────────────── */
+        #setup-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        #setup-banner span { flex: 1; font-weight: 500; }
+
+        #setup-banner input {
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            width: 260px;
+        }
+
+        /* ── Toast ────────────────────────────────────── */
+        #toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: #202124;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        #toast.show { opacity: 1; transform: translateY(0); }
+        #toast.success { background: #188038; }
+        #toast.error   { background: #c5221f; }
+
+        /* ── Connection Cards ─────────────────────────── */
+        .onboarding-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .app-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #dadce0;
+            transition: border-color 0.2s;
+        }
+
+        .app-card.connected { border-color: #188038; }
+        .app-card.error-state { border-color: #c5221f; }
+
+        .app-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .app-icon { font-size: 1.5rem; }
+
+        .connection-status {
+            font-size: 0.75rem;
+            margin-top: 2px;
+            font-weight: 400;
+            color: #5f6368;
+        }
+
+        .connection-status.ok   { color: #188038; }
+        .connection-status.fail { color: #c5221f; }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-connect    { background: #1a73e8; color: #fff; }
+        .btn-connect:hover { background: #1557b0; }
+        .btn-connected  { background: transparent; color: #188038; cursor: default; }
+        .btn-disconnect { background: #fce8e6; color: #c5221f; font-size: 0.8rem; padding: 6px 12px; }
+        .btn-disconnect:hover { background: #f5c6c4; }
+        .btn-loading    { background: #f1f3f4; color: #5f6368; cursor: default; }
+
+        /* ── Table ────────────────────────────────────── */
+        .table-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .table-header-row h2 { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+
+        .table-actions { display: flex; gap: 8px; align-items: center; }
+
+        .btn-refresh {
+            background: #f1f3f4;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+        }
+
+        .btn-refresh:hover { background: #e8eaed; }
+
+        .table-container {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            border: 1px solid #dadce0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1100px;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #dadce0;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #1a73e8;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #f8f9fa; }
+        tr.done-row td { opacity: 0.45; text-decoration: line-through; }
+
+        .task-cell { display: flex; flex-direction: column; gap: 4px; }
+        .task-title { font-weight: 600; color: #202124; }
+        .task-desc  { font-size: 0.82rem; color: #5f6368; font-style: italic; }
+
+        .platform {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #3c4043;
+            background: #f1f3f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #dadce0;
+        }
+
+        .stakeholder {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .avatar {
+            background: #e8eaed;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .badge.high   { background: #fce8e6; color: #c5221f; }
+        .badge.medium { background: #fef7e0; color: #ea8600; }
+        .badge.low    { background: #e6f4ea; color: #188038; }
+
+        .row-actions { display: flex; gap: 6px; margin-top: 6px; }
+
+        .btn-done {
+            background: #e6f4ea; color: #188038;
+            border: none; border-radius: 4px;
+            padding: 3px 10px; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer;
+        }
+
+        .btn-done:hover { background: #ceead6; }
+
+        .btn-snooze {
+            background: #fef7e0; color: #ea8600;
+            border: none; border-radius: 4px;
+            padding: 3px 10px; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer;
+        }
+
+        .btn-snooze:hover { background: #fde89a; }
+
+        /* ── Filters ──────────────────────────────────── */
+        .filter-select {
+            display: block;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #fff;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            font-size: 0.85rem;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .filter-select option { color: #333; }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .sort-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid #fff;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .sort-btn:hover { background: rgba(255,255,255,0.4); }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .dropdown-btn {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 6px;
+            padding: 10px;
+            color: #202124;
+            border: 1px solid #dadce0;
+        }
+
+        .dropdown-content label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .dropdown-content label:last-child { margin-bottom: 0; }
+        .dropdown.show .dropdown-content   { display: block; }
+
+        /* ── Loading / Empty states ───────────────────── */
+        .loading-row td, .empty-row td {
+            text-align: center;
+            color: #5f6368;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #dadce0;
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div class="container">
+
+    <!-- API Key Setup Banner -->
+    <div id="setup-banner" style="display:none;">
+        <span>⚙️ Enter your API key to connect this dashboard to the backend:</span>
+        <input type="password" id="api-key-input" placeholder="Paste API key here" />
+        <button class="btn btn-connect" onclick="saveApiKey()">Save</button>
+    </div>
+
+    <!-- Platform Connections -->
+    <section>
+        <h2>Action Platform Connections</h2>
+        <div class="onboarding-grid" id="connections-grid">
+            <!-- Rendered dynamically -->
+            <div class="app-card"><div class="app-info"><span class="app-icon">💬</span> Slack</div><button class="btn btn-loading">Loading…</button></div>
+            <div class="app-card"><div class="app-info"><span class="app-icon">📧</span> Gmail</div><button class="btn btn-loading">Loading…</button></div>
+            <div class="app-card"><div class="app-info"><span class="app-icon">📋</span> Trello</div><button class="btn btn-loading">Loading…</button></div>
+            <div class="app-card"><div class="app-info"><span class="app-icon">⚙️</span> Jira</div><button class="btn btn-loading">Loading…</button></div>
+        </div>
+    </section>
+
+    <!-- Task Tracker -->
+    <section>
+        <div class="table-header-row">
+            <h2>To-Do Tracker</h2>
+            <div class="table-actions">
+                <button class="btn btn-refresh" onclick="loadTasks()">↻ Refresh</button>
+                <button class="btn btn-refresh" onclick="triggerSync()" id="sync-btn">⚡ Sync Now</button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="taskTable">
+                <thead>
+                    <tr>
+                        <th style="width:22%;">Task</th>
+                        <th style="width:12%;">
+                            Platform
+                            <div class="dropdown" id="platformDropdown">
+                                <button class="dropdown-btn">Filter <span>▼</span></button>
+                                <div class="dropdown-content" id="platformCheckboxes">
+                                    <label><input type="checkbox" value="gmail"  checked> 📧 Gmail</label>
+                                    <label><input type="checkbox" value="slack"  checked> 💬 Slack</label>
+                                    <label><input type="checkbox" value="jira"   checked> ⚙️ Jira</label>
+                                    <label><input type="checkbox" value="trello" checked> 📋 Trello</label>
+                                </div>
+                            </div>
+                        </th>
+                        <th style="width:18%;">Action</th>
+                        <th style="width:13%;">Stakeholder</th>
+                        <th style="width:10%;">
+                            Urgency
+                            <select id="urgencyFilter" class="filter-select">
+                                <option value="all">All</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </th>
+                        <th style="width:25%;">
+                            Due Date
+                            <div class="header-controls">
+                                <select id="tzFilter" class="filter-select" style="margin-top:0;">
+                                    <option value="-12">(GMT-12) Date Line West</option>
+                                    <option value="-11">(GMT-11) Samoa</option>
+                                    <option value="-10">(GMT-10) Hawaii</option>
+                                    <option value="-9">(GMT-09) Alaska</option>
+                                    <option value="-8">(GMT-08) Pacific</option>
+                                    <option value="-7">(GMT-07) Mountain</option>
+                                    <option value="-6">(GMT-06) Central</option>
+                                    <option value="-5">(GMT-05) Eastern</option>
+                                    <option value="-4">(GMT-04) Atlantic</option>
+                                    <option value="-3">(GMT-03) Argentina</option>
+                                    <option value="-2">(GMT-02) Mid-Atlantic</option>
+                                    <option value="-1">(GMT-01) Azores</option>
+                                    <option value="0" selected>(GMT+00) London</option>
+                                    <option value="1">(GMT+01) Central Europe</option>
+                                    <option value="2">(GMT+02) Eastern Europe</option>
+                                    <option value="3">(GMT+03) Moscow</option>
+                                    <option value="4">(GMT+04) Gulf</option>
+                                    <option value="5">(GMT+05) Pakistan</option>
+                                    <option value="5.5">(GMT+05:30) India</option>
+                                    <option value="6">(GMT+06) Bangladesh</option>
+                                    <option value="7">(GMT+07) Indochina</option>
+                                    <option value="8">(GMT+08) China</option>
+                                    <option value="9">(GMT+09) Japan</option>
+                                    <option value="10">(GMT+10) Aust. East</option>
+                                    <option value="11">(GMT+11) Solomon Is.</option>
+                                    <option value="12">(GMT+12) New Zealand</option>
+                                </select>
+                                <button id="sortDateBtn" class="sort-btn">Sort ↕️</button>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="task-body">
+                    <tr class="loading-row"><td colspan="6"><span class="spinner"></span> Loading tasks…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<script>
+const PLATFORM_ICONS = { slack:'💬', gmail:'📧', trello:'📋', jira:'⚙️' };
+const PLATFORM_NAMES = { slack:'Slack', gmail:'Gmail', trello:'Trello', jira:'Jira' };
+
+let allTasks = [];
+let sortAscending = true;
+
+// ── API Key ─────────────────────────────────────────────────────────────────
+
+function getApiKey() { return localStorage.getItem('gen10x_api_key') || ''; }
+
+function saveApiKey() {
+    const val = document.getElementById('api-key-input').value.trim();
+    if (!val) return;
+    localStorage.setItem('gen10x_api_key', val);
+    document.getElementById('setup-banner').style.display = 'none';
+    showToast('API key saved', 'success');
+    init();
+}
+
+function apiHeaders() {
+    return { 'Content-Type': 'application/json', 'X-API-Key': getApiKey() };
+}
+
+async function apiFetch(path, opts = {}) {
+    const res = await fetch('/api' + path, { headers: apiHeaders(), ...opts });
+    if (res.status === 401) { showToast('Invalid API key', 'error'); throw new Error('401'); }
+    return res;
+}
+
+// ── Toast ───────────────────────────────────────────────────────────────────
+
+function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.className = '', 3000);
+}
+
+// ── Connections ──────────────────────────────────────────────────────────────
+
+const PROVIDERS = [
+    { id: 'slack',  icon: '💬', name: 'Slack' },
+    { id: 'gmail',  icon: '📧', name: 'Gmail' },
+    { id: 'trello', icon: '📋', name: 'Trello' },
+    { id: 'jira',   icon: '⚙️', name: 'Jira / Atlassian' },
+];
+
+async function loadConnections() {
+    const grid = document.getElementById('connections-grid');
+    let connected = [];
+
+    try {
+        const res = await apiFetch('/connect');
+        if (res.ok) connected = await res.json();
+    } catch (_) {}
+
+    grid.innerHTML = PROVIDERS.map(p => {
+        const conn = connected.find(c => c.provider === p.id);
+        const isConnected = conn && conn.status === 'connected';
+        const isError = conn && conn.status === 'error';
+
+        const cardClass = isConnected ? 'app-card connected' : isError ? 'app-card error-state' : 'app-card';
+        const statusLine = isConnected
+            ? `<div class="connection-status ok">● Connected</div>`
+            : isError
+            ? `<div class="connection-status fail">● Error — reconnect</div>`
+            : `<div class="connection-status">Not connected</div>`;
+
+        const btn = isConnected
+            ? `<button class="btn btn-disconnect" onclick="disconnect('${p.id}')">Disconnect</button>`
+            : `<button class="btn btn-connect" onclick="connectProvider('${p.id}')">Connect</button>`;
+
+        return `
+        <div class="${cardClass}" id="card-${p.id}">
+            <div>
+                <div class="app-info"><span class="app-icon">${p.icon}</span>${p.name}</div>
+                ${statusLine}
+            </div>
+            ${btn}
+        </div>`;
+    }).join('');
+}
+
+function connectProvider(provider) {
+    if (!getApiKey()) { showToast('Set your API key first', 'error'); return; }
+    window.location.href = `/api/connect/${provider}/start`;
+}
+
+async function disconnect(provider) {
+    if (!confirm(`Disconnect ${PLATFORM_NAMES[provider]}?`)) return;
+    try {
+        await apiFetch(`/connect/${provider}`, { method: 'DELETE' });  // DELETE /api/connect/{provider}
+        showToast(`${PLATFORM_NAMES[provider]} disconnected`);
+        loadConnections();
+    } catch (_) {
+        showToast('Failed to disconnect', 'error');
+    }
+}
+
+// ── Tasks ────────────────────────────────────────────────────────────────────
+
+async function loadTasks() {
+    const tbody = document.getElementById('task-body');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span> Loading tasks…</td></tr>';
+
+    try {
+        const res = await apiFetch('/tasks?status=open');
+        if (!res.ok) throw new Error(res.status);
+        allTasks = await res.json();
+        renderTasks();
+    } catch (_) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Could not load tasks. Check API key and backend.</td></tr>';
+    }
+}
+
+function urgencyClass(score) {
+    if (score >= 70) return 'high';
+    if (score >= 40) return 'medium';
+    return 'low';
+}
+
+function urgencyLabel(score) {
+    if (score >= 70) return 'High';
+    if (score >= 40) return 'Medium';
+    return 'Low';
+}
+
+function formatDate(iso) {
+    if (!iso) return '—';
+    const offsetHours = parseFloat(document.getElementById('tzFilter').value);
+    const d = new Date(iso);
+    const shifted = new Date(d.getTime() + offsetHours * 3600000);
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let h = shifted.getUTCHours(), m = shifted.getUTCMinutes().toString().padStart(2,'0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${days[shifted.getUTCDay()]}, ${months[shifted.getUTCMonth()]} ${shifted.getUTCDate()}, ${String(h).padStart(2,'0')}:${m} ${ampm}`;
+}
+
+function renderTasks() {
+    const tbody = document.getElementById('task-body');
+    const checkedPlatforms = Array.from(document.querySelectorAll('#platformCheckboxes input:checked')).map(c => c.value);
+    const urgencyVal = document.getElementById('urgencyFilter').value;
+
+    const visible = allTasks.filter(t => {
+        const src = (t.source || '').toLowerCase();
+        const matchPlatform = checkedPlatforms.some(p => src.includes(p));
+        const matchUrgency = urgencyVal === 'all' || urgencyClass(t.urgency_score) === urgencyVal;
+        return matchPlatform && matchUrgency;
+    });
+
+    if (!visible.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No tasks match the current filters.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = visible.map(t => {
+        const icon = PLATFORM_ICONS[t.source] || '📌';
+        const platName = PLATFORM_NAMES[t.source] || t.source;
+        const urg = urgencyClass(t.urgency_score);
+        const urgLbl = urgencyLabel(t.urgency_score);
+        const dateIso = t.due_date || '';
+        const initials = (t.stakeholder || '?').split(/[\s\/]/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+        const reason = t.urgency_reason ? `title="${t.urgency_reason}"` : '';
+
+        return `
+        <tr id="row-${t.id}" data-date="${dateIso}" data-urgency="${urg}" data-platform="${t.source}">
+            <td>
+                <div class="task-cell">
+                    <span class="task-title">${escHtml(t.summary)}</span>
+                    ${t.urgency_reason ? `<span class="task-desc">${escHtml(t.urgency_reason)}</span>` : ''}
+                    <div class="row-actions">
+                        <button class="btn-done"   onclick="markDone(${t.id})">✓ Done</button>
+                        <button class="btn-snooze" onclick="snoozeTask(${t.id})">⏰ Snooze</button>
+                    </div>
+                </div>
+            </td>
+            <td><span class="platform">${icon} ${platName}</span></td>
+            <td>${escHtml(t.action_type)}</td>
+            <td>
+                <div class="stakeholder">
+                    <span class="avatar">${initials}</span>
+                    ${escHtml(t.stakeholder || '—')}
+                </div>
+            </td>
+            <td><span class="badge ${urg}" ${reason}>${urgLbl}</span></td>
+            <td class="date-cell">${formatDate(dateIso)}</td>
+        </tr>`;
+    }).join('');
+}
+
+async function markDone(id) {
+    try {
+        await apiFetch(`/tasks/${id}/done`, { method: 'POST' });
+        const row = document.getElementById(`row-${id}`);
+        if (row) { row.classList.add('done-row'); setTimeout(() => row.remove(), 800); }
+        allTasks = allTasks.filter(t => t.id !== id);
+        showToast('Marked as done ✓', 'success');
+    } catch (_) { showToast('Failed to update task', 'error'); }
+}
+
+async function snoozeTask(id) {
+    const until = prompt('Snooze until (YYYY-MM-DD HH:MM):');
+    if (!until) return;
+    try {
+        const isoDate = new Date(until).toISOString();
+        await apiFetch(`/tasks/${id}/snooze`, {
+            method: 'POST',
+            body: JSON.stringify({ until: isoDate }),
+        });
+        allTasks = allTasks.filter(t => t.id !== id);
+        renderTasks();
+        showToast('Task snoozed ⏰');
+    } catch (_) { showToast('Invalid date or request failed', 'error'); }
+}
+
+async function triggerSync() {
+    const btn = document.getElementById('sync-btn');
+    btn.textContent = '⟳ Syncing…';
+    btn.disabled = true;
+    try {
+        await apiFetch('/refresh', { method: 'POST' });
+        showToast('Sync triggered — tasks will update shortly', 'success');
+        setTimeout(loadTasks, 3000);
+    } catch (_) {
+        showToast('Sync failed', 'error');
+    } finally {
+        btn.textContent = '⚡ Sync Now';
+        btn.disabled = false;
+    }
+}
+
+// ── Sorting & Filtering ──────────────────────────────────────────────────────
+
+document.getElementById('sortDateBtn').addEventListener('click', () => {
+    allTasks.sort((a, b) => {
+        const da = new Date(a.due_date || 0), db = new Date(b.due_date || 0);
+        return sortAscending ? da - db : db - da;
+    });
+    sortAscending = !sortAscending;
+    document.getElementById('sortDateBtn').textContent = sortAscending ? 'Sort ↕️' : 'Sort ↑';
+    renderTasks();
+});
+
+document.querySelector('.dropdown-btn').addEventListener('click', e => {
+    document.getElementById('platformDropdown').classList.toggle('show');
+    e.stopPropagation();
+});
+
+document.addEventListener('click', e => {
+    const dd = document.getElementById('platformDropdown');
+    if (!dd.contains(e.target)) dd.classList.remove('show');
+});
+
+document.querySelectorAll('#platformCheckboxes input').forEach(c => c.addEventListener('change', renderTasks));
+document.getElementById('urgencyFilter').addEventListener('change', renderTasks);
+document.getElementById('tzFilter').addEventListener('change', renderTasks);
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
+function handleOAuthCallback() {
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get('connected');
+    const error = params.get('error');
+    if (connected) {
+        showToast(`${PLATFORM_NAMES[connected] || connected} connected successfully ✓`, 'success');
+        history.replaceState({}, '', window.location.pathname);
+    }
+    if (error) {
+        showToast(`Connection failed: ${error}`, 'error');
+        history.replaceState({}, '', window.location.pathname);
+    }
+}
+
+async function init() {
+    handleOAuthCallback();
+
+    if (!getApiKey()) {
+        document.getElementById('setup-banner').style.display = 'flex';
+        return;
+    }
+
+    await Promise.all([loadConnections(), loadTasks()]);
+
+    // Auto-refresh tasks every 60s
+    setInterval(loadTasks, 60000);
+}
+
+init();
+</script>
+
+</body>
+</html>

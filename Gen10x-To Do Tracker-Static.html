@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLR TEC 07 - Dashboard</title>
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f8;
+            color: #202124;
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+
+        /* Section Headings */
+        h2 {
+            font-size: 1.5rem;
+            color: #1a73e8;
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e8eaed;
+        }
+
+        /* Onboarding Flow */
+        .onboarding-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .app-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #dadce0;
+        }
+
+        .app-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .app-icon {
+            font-size: 1.5rem;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-action {
+            background: #f1f3f4;
+            color: #3c4043;
+        }
+
+        .btn-action:hover {
+            background: #e8eaed;
+        }
+
+        .btn-connected {
+            background: transparent;
+            color: #188038;
+            cursor: default;
+        }
+
+        /* Task Tracker Table Flow */
+        .table-container {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            border: 1px solid #dadce0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1050px; 
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #dadce0;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #1a73e8;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #f8f9fa;
+        }
+
+        .task-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .task-title {
+            font-weight: 600;
+            color: #202124;
+        }
+
+        .task-desc {
+            font-size: 0.85rem;
+            color: #5f6368;
+            font-style: italic;
+        }
+
+        .platform {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #3c4043;
+            background: #f1f3f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #dadce0;
+        }
+
+        .stakeholder {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .avatar {
+            background: #e8eaed;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .badge.high {
+            background: #fce8e6;
+            color: #c5221f;
+        }
+
+        .badge.medium {
+            background: #fef7e0;
+            color: #ea8600;
+        }
+
+        /* Filter & Sort Controls */
+        .filter-select {
+            display: block;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #fff;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 0.85rem;
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        .filter-select option {
+            color: #333;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .sort-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid #fff;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .sort-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Multi-select Dropdown Styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        .dropdown-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: 1px solid #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #ffffff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 6px;
+            padding: 10px;
+            color: #202124;
+            border: 1px solid #dadce0;
+        }
+        
+        .dropdown-content label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .dropdown-content label:last-child {
+            margin-bottom: 0;
+        }
+        
+        .dropdown.show .dropdown-content {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <section>
+            <h2>Action Platform Connections</h2>
+            <div class="onboarding-grid">
+                <div class="app-card">
+                    <div class="app-info"><span class="app-icon">💬</span> Slack</div>
+                    <button class="btn btn-action">Connect</button>
+                </div>
+                
+                <div class="app-card">
+                    <div class="app-info"><span class="app-icon">📧</span> Gmail</div>
+                    <button class="btn btn-connected">✔ Connected</button>
+                </div>
+
+                <div class="app-card">
+                    <div class="app-info"><span class="app-icon">📋</span> Trello</div>
+                    <button class="btn btn-connected">✔ Connected</button>
+                </div>
+
+                <div class="app-card">
+                    <div class="app-info"><span class="app-icon">⚙️</span> Jira / Atlassian</div>
+                    <button class="btn btn-action">Authenticate</button>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>To-Do Tracker</h2>
+            <div class="table-container">
+                <table id="taskTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 22%;">Task</th>
+                            <th style="width: 12%;">
+                                Platform
+                                <div class="dropdown" id="platformDropdown">
+                                    <button class="dropdown-btn">Select <span>▼</span></button>
+                                    <div class="dropdown-content" id="platformCheckboxes">
+                                        <label><input type="checkbox" value="gmail" checked> Gmail</label>
+                                        <label><input type="checkbox" value="slack" checked> Slack</label>
+                                        <label><input type="checkbox" value="jira" checked> Jira</label>
+                                        <label><input type="checkbox" value="trello" checked> Trello</label>
+                                    </div>
+                                </div>
+                            </th>
+                            <th style="width: 18%;">Action</th>
+                            <th style="width: 13%;">Stakeholder</th>
+                            <th style="width: 10%;">
+                                Urgency
+                                <select id="urgencyFilter" class="filter-select">
+                                    <option value="all">All</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                </select>
+                            </th>
+                            <th style="width: 25%;">
+                                Due Date
+                                <div class="header-controls">
+                                    <select id="tzFilter" class="filter-select" style="margin-top:0;">
+                                        <option value="-12">(GMT-12:00) International Date Line West</option>
+                                        <option value="-11">(GMT-11:00) Samoa Standard Time</option>
+                                        <option value="-10">(GMT-10:00) Hawaii-Aleutian Time</option>
+                                        <option value="-9">(GMT-09:00) Alaska Standard Time</option>
+                                        <option value="-8">(GMT-08:00) Pacific Time</option>
+                                        <option value="-7">(GMT-07:00) Mountain Time</option>
+                                        <option value="-6">(GMT-06:00) Central Time</option>
+                                        <option value="-5">(GMT-05:00) Eastern Time</option>
+                                        <option value="-4">(GMT-04:00) Atlantic Time</option>
+                                        <option value="-3">(GMT-03:00) Argentina Time</option>
+                                        <option value="-2">(GMT-02:00) Mid-Atlantic</option>
+                                        <option value="-1">(GMT-01:00) Azores Time</option>
+                                        <option value="0" selected>(GMT+00:00) Greenwich Mean Time</option>
+                                        <option value="1">(GMT+01:00) Central European Time</option>
+                                        <option value="2">(GMT+02:00) Eastern European Time</option>
+                                        <option value="3">(GMT+03:00) Moscow Standard Time</option>
+                                        <option value="4">(GMT+04:00) Gulf Standard Time</option>
+                                        <option value="5">(GMT+05:00) Pakistan Standard Time</option>
+                                        <option value="5.5">(GMT+05:30) Indian Standard Time</option>
+                                        <option value="6">(GMT+06:00) Bangladesh Time</option>
+                                        <option value="7">(GMT+07:00) Indochina Time</option>
+                                        <option value="8">(GMT+08:00) China Standard Time</option>
+                                        <option value="9">(GMT+09:00) Japan Standard Time</option>
+                                        <option value="10">(GMT+10:00) Aust. Eastern Time</option>
+                                        <option value="11">(GMT+11:00) Solomon Islands Time</option>
+                                        <option value="12">(GMT+12:00) New Zealand Time</option>
+                                    </select>
+                                    <button id="sortDateBtn" class="sort-btn">Sort ↕️</button>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <span class="task-title">Finalize ISP Vendor and Contract</span>
+                                    <span class="task-desc">Needs completion by end of week for launch</span>
+                                </div>
+                            </td>
+                            <td><span class="platform">📧 Gmail</span></td>
+                            <td>Review contract terms and execute signature</td>
+                            <td><div class="stakeholder"><span class="avatar">👤</span> Facilities/Admin</div></td>
+                            <td><span class="badge high">High</span></td>
+                            <td data-date="2026-10-27T17:00:00Z">Friday, Oct 27, 05:00 PM</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <span class="task-title">CCTV Placement Walkthrough</span>
+                                    <span class="task-desc">Awaiting walkthrough with security head</span>
+                                </div>
+                            </td>
+                            <td><span class="platform">💬 Slack</span></td>
+                            <td>Coordinate time and confirm availability</td>
+                            <td><div class="stakeholder"><span class="avatar">👤</span> Security Team</div></td>
+                            <td><span class="badge medium">Medium</span></td>
+                            <td data-date="2026-10-25T10:00:00Z">Wednesday, Oct 25, 10:00 AM</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <span class="task-title">Project Handover Meeting Prep</span>
+                                    <span class="task-desc">Scheduled for next Monday</span>
+                                </div>
+                            </td>
+                            <td><span class="platform">⚙️ Jira</span></td>
+                            <td>Prepare punch list and review budget</td>
+                            <td><div class="stakeholder"><span class="avatar">👤</span> All Leads</div></td>
+                            <td><span class="badge high">High</span></td>
+                            <td data-date="2026-10-30T14:00:00Z">Monday, Oct 30, 02:00 PM</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <span class="task-title">Security System Installation</span>
+                                    <span class="task-desc">Dependent on complete wiring</span>
+                                </div>
+                            </td>
+                            <td><span class="platform">📋 Trello</span></td>
+                            <td>Confirm readiness and monitor progress</td>
+                            <td><div class="stakeholder"><span class="avatar">👤</span> Security Team</div></td>
+                            <td><span class="badge medium">Medium</span></td>
+                            <td data-date="2026-10-26T16:30:00Z">Thursday, Oct 26, 04:30 PM</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <span class="task-title">Furniture Procurement for Office</span>
+                                    <span class="task-desc">Order lead times require processing PO now</span>
+                                </div>
+                            </td>
+                            <td><span class="platform">📧 Gmail</span></td>
+                            <td>Process PO to approved vendors</td>
+                            <td><div class="stakeholder"><span class="avatar">👤</span> Procurement</div></td>
+                            <td><span class="badge high">High</span></td>
+                            <td data-date="2026-10-28T12:00:00Z">Saturday, Oct 28, 12:00 PM</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <span class="task-title">Finalize Employee Seating Plan</span>
+                                    <span class="task-desc">Feedback from departments needed</span>
+                                </div>
+                            </td>
+                            <td><span class="platform">💬 Slack</span></td>
+                            <td>Integrate feedback and distribute map</td>
+                            <td><div class="stakeholder"><span class="avatar">👤</span> HR/Admin</div></td>
+                            <td><span class="badge medium">Medium</span></td>
+                            <td data-date="2026-10-27T09:00:00Z">Friday, Oct 27, 09:00 AM</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <span class="task-title">IT Infrastructure & Networking</span>
+                                    <span class="task-desc">Core task for other dependencies</span>
+                                </div>
+                            </td>
+                            <td><span class="platform">⚙️ Jira</span></td>
+                            <td>Monitor server rack installation</td>
+                            <td><div class="stakeholder"><span class="avatar">👤</span> IT Dept</div></td>
+                            <td><span class="badge high">High</span></td>
+                            <td data-date="2026-10-26T11:00:00Z">Thursday, Oct 26, 11:00 AM</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="task-cell">
+                                    <span class="task-title">Cafeteria Setup Vendor Selection</span>
+                                    <span class="task-desc">Vendor delivery timelines vary</span>
+                                </div>
+                            </td>
+                            <td><span class="platform">📋 Trello</span></td>
+                            <td>Review proposals and select final vendor</td>
+                            <td><div class="stakeholder"><span class="avatar">👤</span> Vendor Mgmt</div></td>
+                            <td><span class="badge medium">Medium</span></td>
+                            <td data-date="2026-10-29T15:00:00Z">Sunday, Oct 29, 03:00 PM</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urgencyFilter = document.getElementById('urgencyFilter');
+            const tzFilter = document.getElementById('tzFilter');
+            const sortDateBtn = document.getElementById('sortDateBtn');
+            const tableBody = document.querySelector('#taskTable tbody');
+            let rows = Array.from(tableBody.querySelectorAll('tr'));
+            let sortAscending = true;
+
+            // Platform Dropdown Logic
+            const platformDropdownBtn = document.querySelector('.dropdown-btn');
+            const platformDropdown = document.getElementById('platformDropdown');
+            const platformCheckboxes = document.querySelectorAll('#platformCheckboxes input');
+
+            // Toggle dropdown visibility
+            platformDropdownBtn.addEventListener('click', (e) => {
+                platformDropdown.classList.toggle('show');
+                e.stopPropagation();
+            });
+
+            // Close dropdown if clicked outside
+            document.addEventListener('click', (e) => {
+                if (!platformDropdown.contains(e.target)) {
+                    platformDropdown.classList.remove('show');
+                }
+            });
+
+            // Filter logic
+            function filterTable() {
+                const checkedPlatforms = Array.from(platformCheckboxes)
+                                              .filter(chk => chk.checked)
+                                              .map(chk => chk.value.toLowerCase());
+                const urgencyVal = urgencyFilter.value.toLowerCase();
+
+                rows.forEach(row => {
+                    const rowPlatform = row.querySelector('.platform').textContent.toLowerCase();
+                    const rowUrgency = row.querySelector('.badge').textContent.toLowerCase();
+
+                    // Check if row's platform is present in the checked platform list
+                    const matchesPlatform = checkedPlatforms.some(platform => rowPlatform.includes(platform));
+                    const matchesUrgency = urgencyVal === 'all' || rowUrgency === urgencyVal;
+
+                    if (matchesPlatform && matchesUrgency) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
+            // Bind filters
+            platformCheckboxes.forEach(chk => chk.addEventListener('change', filterTable));
+            urgencyFilter.addEventListener('change', filterTable);
+
+            // Timezone formatting logic
+            function updateDatesForTimezone() {
+                const offsetHours = parseFloat(tzFilter.value);
+                
+                rows.forEach(row => {
+                    const dateCell = row.querySelector('td:last-child');
+                    const utcDateStr = dateCell.getAttribute('data-date');
+                    
+                    const d = new Date(utcDateStr);
+                    const utcMs = d.getTime();
+                    const targetMs = utcMs + (offsetHours * 60 * 60 * 1000);
+                    const td = new Date(targetMs);
+                    
+                    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    
+                    const dayName = days[td.getUTCDay()];
+                    const monthName = months[td.getUTCMonth()];
+                    const dateNum = td.getUTCDate();
+                    
+                    let hours = td.getUTCHours();
+                    const minutes = td.getUTCMinutes().toString().padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    
+                    hours = hours % 12;
+                    hours = hours ? hours : 12; // '0' should display as '12'
+                    const hoursStr = hours.toString().padStart(2, '0');
+                    
+                    dateCell.textContent = `${dayName}, ${monthName} ${dateNum}, ${hoursStr}:${minutes} ${ampm}`;
+                });
+            }
+
+            // Bind timezone
+            tzFilter.addEventListener('change', updateDatesForTimezone);
+
+            // Sort logic
+            function sortTable() {
+                rows.sort((a, b) => {
+                    const dateA = new Date(a.querySelector('td:last-child').getAttribute('data-date'));
+                    const dateB = new Date(b.querySelector('td:last-child').getAttribute('data-date'));
+                    
+                    return sortAscending ? dateA - dateB : dateB - dateA;
+                });
+
+                sortAscending = !sortAscending;
+                sortDateBtn.innerHTML = sortAscending ? 'Sort ⬇️' : 'Sort ⬆️';
+
+                rows.forEach(row => tableBody.appendChild(row));
+            }
+
+            // Bind Sort
+            sortDateBtn.addEventListener('click', sortTable);
+
+            // Run timezone conversion initially to match the selected dropdown state
+            updateDatesForTimezone();
+        });
+    </script>
+
+</body>
+</html>
